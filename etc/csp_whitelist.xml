@@ -9,14 +9,11 @@
         </policy>
         <policy id="img-src">
             <values>
-                <value id="kueskipay-img" type="host">kueskipay.com</value>
-                <value id="kueskipay3-img" type="host">magento236.local</value>
-                
+                <value id="openpay-img" type="host">*.postimg.cc</value>
             </values>
         </policy>
         <policy id="frame-src">
             <values>
-                <value id="paynet" type="host">*.paynet.com.mx</value>
                 <value id="openpay-dashboard.mx" type="host">*.openpay.mx</value>
                 <value id="openpay-dashboard.co" type="host">*.openpay.co</value>
             </values>
