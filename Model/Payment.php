@@ -8,6 +8,7 @@
 namespace Openpay\CheckoutLending\Model;
 
 // Class Heritage
+use Magento\Framework\Exception\AbstractAggregateException;
 use Magento\Payment\Model\Method\AbstractMethod;
 
 // @createWebhook
@@ -19,6 +20,7 @@ use Magento\Framework\Validator\Exception;
 
 use Magento\Store\Model\ScopeInterface;
 use Magento\Customer\Model\Customer;
+use Magento\Framework\Exception\CouldNotSaveException;
 
 
 // Construct Imports
@@ -64,6 +66,8 @@ class Payment extends AbstractMethod
     protected $_inlineTranslation;
     protected $_directoryList;
     protected $_file;
+    protected $_agreementCollectionFactory;
+    protected $_messageManager;
 
 
     public function __construct(
@@ -83,6 +87,8 @@ class Payment extends AbstractMethod
         Customer $customerModel,
         CustomerSession $customerSession,
         OpenpayCustomerFactory $openpayCustomerFactory,
+        \Magento\CheckoutAgreements\Model\ResourceModel\Agreement\CollectionFactory $agreementCollectionFactory,
+        \Magento\Framework\Message\ManagerInterface $messageManager,
         array $data = []
 ) {
     parent::__construct(
@@ -109,6 +115,8 @@ class Payment extends AbstractMethod
     $this->_storeManager = $storeManager;
     $this->_transportBuilder = $transportBuilder;
     $this->_scopeConfig = $scopeConfig;
+    $this->_agreementCollectionFactory = $agreementCollectionFactory;
+    $this->_messageManager = $messageManager;
 
     // LOAD MERCHANT DATA CONECTION
     $this->is_active = $this->_scopeConfig->getValue('payment/openpay_checkoutLending/active');
@@ -330,6 +338,7 @@ class Payment extends AbstractMethod
 
     private function createChargeData($order,$billing,$shipping,$customer_data,$amount){
         try {
+            $terms_flag = $this->isPrivacyTermsActivated();
             $base_url = $this->_storeManager->getStore()->getBaseUrl(UrlInterface::URL_TYPE_WEB);
             $charge_data = array(
                 'method' => 'lending',
@@ -338,7 +347,7 @@ class Payment extends AbstractMethod
                 'description' => sprintf('ORDER #%s, %s', $order->getIncrementId(), $order->getCustomerEmail()),
                 'order_id' => $order->getIncrementId(),
                 "lending_data" => Array(
-                    "is_privacy_terms_accepted" => true, // Pending
+                    "is_privacy_terms_accepted" => $terms_flag, // Pending
                     "callbacks" => Array(
                         "on_success" => $base_url."openpay/payment/success",  // Pending
                         "on_reject" => $base_url."openpay/payment/cancelled", //?id=".$order->getIncrementId(),
@@ -373,12 +382,11 @@ class Payment extends AbstractMethod
                 ),
                 'customer' => $customer_data
             );
-        }catch (Exception $e) {
-            $this->debugData(['exception' => $e->getMessage()]);
-            //$this->_logger->error(__( $e->getMessage()));
-            throw new Exception(__($this->error($e)));
+            return $charge_data;
+        }catch (CouldNotSaveException $e) {
+            $this->logger->error($e->getMessage());
+            throw new CouldNotSaveException(__($e->getMessage()),$e);
         }
-        return $charge_data;
     }
 
     private function updateOrderData($payment, $charge_response, $order){
@@ -414,6 +422,23 @@ class Payment extends AbstractMethod
             return $openpay_customer->charges->get($charge_id);
         } catch (\Exception $e) {
             throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
+        }
+    }
+
+    public function isPrivacyTermsActivated()
+    {
+        $agreements = [];
+        if ($this->_scopeConfig->isSetFlag('checkout/options/enable_agreements', ScopeInterface::SCOPE_STORE)) {
+            /*OBTENER LISTA DE TERMINOS Y CONDICIONES*/
+            ///** @var \Magento\CheckoutAgreements\Model\ResourceModel\Agreement\Collection $agreements */
+            //$agreements = $this->_agreementCollectionFactory->create();
+            //$agreements->addStoreFilter($this->_storeManager->getStore()->getId());
+            //$agreements->addFieldToFilter('is_active', 1);
+            //$this->setData('agreements',$agreements->getData());
+            //$this->getData('agreements');
+            return true;
+        }else{
+            throw new CouldNotSaveException(__('Los términos y condiciones no han sido aceptados'),null);
         }
     }
 
