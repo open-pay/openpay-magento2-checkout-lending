@@ -1,6 +1,6 @@
-# Openpay-Magento2-Stores
+# Openpay-Magento2-CheckoutLending
 
-Módulo para pagos en efectivo con Openpay para Magento2 (soporte hasta v2.3.0)
+Módulo para pagos con Checkout Lending con Openpay para Magento2 (soporte hasta v2.3.0)
 
 ## Instalación
 
@@ -8,23 +8,23 @@ Módulo para pagos en efectivo con Openpay para Magento2 (soporte hasta v2.3.0)
 
 **Para versiones de Magento < 2.3.0**
 ```bash    
-composer require openpay/magento2-stores:~3.0.0
+composer require openpay/magento2-checkoutlending:~3.0.0
 ```
 
 **Para versiones de Magento >= 2.3.0**
 ```bash    
-composer require openpay/magento2-stores:~3.4.0
+composer require openpay/magento2-checkoutlending:~3.4.0
 ```
 
 **Para versiones de Magento >= 2.3.5**
 ```bash    
-composer require openpay/magento2-stores:~4.0.*
+composer require openpay/magento2-checkoutlending:~4.0.*
 ```
 
 2. Después se procede a habilitar el módulo,actualizar y limpiar cache de la plataforma.
 
 ```bash    
-php bin/magento module:enable Openpay_Stores --clear-static-content
+php bin/magento module:enable Openpay_CheckoutLending --clear-static-content
 php bin/magento setup:upgrade
 php bin/magento cache:clean
 ```
