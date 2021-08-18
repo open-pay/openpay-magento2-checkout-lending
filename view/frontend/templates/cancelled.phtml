@@ -1,0 +1,20 @@
+<?php
+/**
+ * Copyright © 2015 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+?>
+<?php /* @var \Openpay\CheckoutLending\Block\Cancelled $block */ ?>
+
+ <!-- <div> <?php // echo $block->sayHello(); ?> </div> -->
+
+<?php if ($block->getData('error_msg')) : ?>
+    <p><?php echo __($block->getData('error_msg')) ?></p>
+<?php else : ?>
+    <div style="margin:auto; width: 40%; padding:10px; text-align:center;" class="container">
+        <img style="width: 100%;" data-bind="attr: { src: require.toUrl('Openpay_CheckoutLending/img/cancelled.png') }" alt="">
+        <h2 style="text-align:center;">Su orden fue cancelada</h2>
+    </div>
+<?php endif; ?>
+
+
