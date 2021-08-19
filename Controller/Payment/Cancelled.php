@@ -2,7 +2,7 @@
 /**
  * @category    Payments
  * @package     Openpay_CheckoutLending
- * @author      Federico Balderas
+ * @author      Openpay
  * @copyright   Openpay (http://openpay.mx)
  * @license     http://www.apache.org/licenses/LICENSE-2.0  Apache License Version 2.0
  */
