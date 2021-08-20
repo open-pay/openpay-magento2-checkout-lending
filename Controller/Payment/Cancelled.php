@@ -116,6 +116,8 @@ class Cancelled extends \Magento\Framework\App\Action\Action
                 $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __('La orden ha sido cancelada'));
                 $order->save();
                 $this->logger->debug('## CL.controller.payment.cancelled.execute -- ORDER CANCELLED ##');
+            }elseif($order && $charge->status != 'completed' && $order->getStatus() == "canceled"){
+                $error_msg = "La orden ha sido cancelada debido a un error en el pago";
             }else{
                 $error_msg = "La orden no puede ser cancelada";
             }
