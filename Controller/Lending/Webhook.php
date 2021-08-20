@@ -7,12 +7,11 @@
  * @license     http://www.apache.org/licenses/LICENSE-2.0  Apache License Version 2.0
  */
 
-namespace Openpay\CheckoutLending\Controller\Index;
+namespace Openpay\CheckoutLending\Controller\Lending;
 
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
 use Openpay\CheckoutLending\Model\Payment as OpenpayPayment;
-
 use Magento\Framework\App\CsrfAwareActionInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\Request\InvalidRequestException;
