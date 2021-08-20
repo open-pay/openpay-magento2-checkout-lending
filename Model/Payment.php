@@ -185,7 +185,7 @@ class Payment extends AbstractMethod
         $this->logger->debug('## 0.1 INSTANCE DATA --' . json_encode($this->merchant_id) . " --- " . json_encode($this->sk) . " --- " . json_encode($this->country));
         $openpay = $this->getOpenpayInstance();
         $base_url = $this->_storeManager->getStore()->getBaseUrl(UrlInterface::URL_TYPE_WEB);
-        $uri = $base_url."openpay/index/webhook";
+        $uri = $base_url."openpay/lending/webhook";
 
         $webhooks = $openpay->webhooks->getList([]);
         $webhookCreated = $this->isWebhookCreated($webhooks, $uri);
