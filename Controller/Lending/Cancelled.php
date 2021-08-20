@@ -6,7 +6,7 @@
  * @copyright   Openpay (http://openpay.mx)
  * @license     http://www.apache.org/licenses/LICENSE-2.0  Apache License Version 2.0
  */
-namespace Openpay\CheckoutLending\Controller\Payment;
+namespace Openpay\CheckoutLending\Controller\Lending;
 
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;

@@ -349,10 +349,10 @@ class Payment extends AbstractMethod
                 "lending_data" => Array(
                     "is_privacy_terms_accepted" => $terms_flag, // Pending
                     "callbacks" => Array(
-                        "on_success" => $base_url."openpay/payment/success",  // Pending
-                        "on_reject" => $base_url."openpay/payment/cancelled", //?id=".$order->getIncrementId(),
-                        "on_canceled" => $base_url."openpay/payment/cancelled", //?id=".$order->getIncrementId(),
-                        "on_failed" => $base_url."openpay/payment/cancelled", //?id=".$order->getIncrementId()
+                        "on_success" => $base_url."openpay/lending/success",  // Pending
+                        "on_reject" => $base_url."openpay/lending/cancelled", //?id=".$order->getIncrementId(),
+                        "on_canceled" => $base_url."openpay/lending/cancelled", //?id=".$order->getIncrementId(),
+                        "on_failed" => $base_url."openpay/lending/cancelled", //?id=".$order->getIncrementId()
                     ),
                     "shipping" => Array(
                         "name" => $shipping->getFirstname(),
