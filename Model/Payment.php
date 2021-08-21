@@ -549,7 +549,13 @@ class Payment extends AbstractMethod
 
             if (!$this->customerSession->isLoggedIn()) {
                 // Cargo para usuarios "invitados"
-                return $openpay->charges->create($charge_request);
+                $charge = $openpay->charges->create($charge_request);
+                $this->logger->debug($charge->error_message);
+                $this->logger->debug(json_encode($charge->error_message));
+                if($charge->error_message){
+                    throw new CouldNotSaveException(__($charge->error_message),null);
+                }
+                return $charge;
             }
 
             // Se remueve el atributo de "customer" porque ya esta relacionado con una cuenta en Openpay
@@ -558,9 +564,14 @@ class Payment extends AbstractMethod
             $openpay_customer = $this->retrieveOpenpayCustomerAccount($customer_data);
 
             // Cargo para usuarios con cuenta
-            return $openpay_customer->charges->create($charge_request);
-        }catch (\Exception $e) {
-            throw new Exception(__($e->getMessage()));
+            $charge = $openpay_customer->charges->create($charge_request);
+            if($charge->error_message){
+                throw new CouldNotSaveException(__($charge->error_message),null);
+            }
+            return $charge;
+        }catch (CouldNotSaveException $e) {
+            $this->logger->error($e->getMessage());
+            throw new CouldNotSaveException(__($e->getMessage()),$e);
         }
     }
 }
