@@ -22,6 +22,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Exception\CouldNotSaveException;
 
+use Openpay\Data\Client as Openpay;
 
 // Construct Imports
 use Magento\Store\Model\StoreManagerInterface;
@@ -261,11 +262,11 @@ class Payment extends AbstractMethod
     public function getOpenpayInstance() {
         try{
             $this->logger->debug('## CL.model.payment.getOpenpayInstance', array('merchant_id' => $this->merchant_id, 'sk' => $this->sk, 'country' => $this->country ));
-            $openpay = \Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
-            \Openpay::setSandboxMode($this->is_sandbox);
+            $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
+            Openpay::setSandboxMode($this->is_sandbox);
 
             $userAgent = "Openpay-MTO2".$this->country."/v2";
-            \Openpay::setUserAgent($userAgent);
+            Openpay::setUserAgent($userAgent);
 
             return $openpay;
         }catch (\Exception $e) {
