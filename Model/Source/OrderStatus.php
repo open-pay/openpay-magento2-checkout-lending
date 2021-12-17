@@ -1,24 +1,24 @@
 <?php
-/** 
+/**
  * @category    Payments
- * @package     Openpay_Stores
+ * @package     Openpay_CheckoutLending
  * @author      Openpay
  * @copyright   Openpay (http://openpay.mx)
  * @license     http://www.apache.org/licenses/LICENSE-2.0  Apache License Version 2.0
  */
 
-namespace Openpay\Stores\Model\Source;
+namespace Openpay\CheckoutLending\Model\Source;
 
 use \Magento\Sales\Model\Order;
 
 /**
- * Class OrderStatus 
+ * Class OrderStatus
  */
 class OrderStatus implements \Magento\Framework\Option\ArrayInterface
 {
     /**
      * Possible actions on order place
-     * 
+     *
      * @return array
      */
     public function toOptionArray()

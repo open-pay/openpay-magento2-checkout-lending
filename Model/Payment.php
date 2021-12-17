@@ -79,7 +79,6 @@ class Payment extends AbstractMethod
         \Magento\Payment\Helper\Data $paymentData,
         ScopeConfigInterface $scopeConfig,
         \Magento\Payment\Model\Method\Logger $logger,
-        \Openpay\Stores\Mail\Template\TransportBuilder $transportBuilder,
         \Magento\Framework\Translate\Inline\StateInterface $inlineTranslation,
         StoreManagerInterface $storeManager,
         LoggerInterface $logger_interface,
@@ -114,7 +113,6 @@ class Payment extends AbstractMethod
     $this->logger = $logger_interface;
     $this->_inlineTranslation = $inlineTranslation;
     $this->_storeManager = $storeManager;
-    $this->_transportBuilder = $transportBuilder;
     $this->_scopeConfig = $scopeConfig;
     $this->_agreementCollectionFactory = $agreementCollectionFactory;
     $this->_messageManager = $messageManager;
