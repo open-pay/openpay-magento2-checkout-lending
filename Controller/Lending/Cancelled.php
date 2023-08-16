@@ -13,9 +13,7 @@ use Magento\Framework\View\Result\PageFactory;
 use Magento\Sales\Model\ResourceModel\Order\Invoice\Collection as InvoiceCollection;
 use Openpay\CheckoutLending\Model\Payment as OpenpayPayment;
 use Magento\Sales\Model\Order\Invoice;
-/**
- * Webhook class
- */
+
 class Cancelled extends \Magento\Framework\App\Action\Action
 {
     protected $resultPageFactory;
@@ -61,6 +59,7 @@ class Cancelled extends \Magento\Framework\App\Action\Action
     }
 
     public function execute() {
+        $this->logger->debug('#Cancelled');
         $customer=null;
         $error_msg=null;
         try {
@@ -117,7 +116,7 @@ class Cancelled extends \Magento\Framework\App\Action\Action
                 $order->save();
                 $this->logger->debug('## CL.controller.payment.cancelled.execute -- ORDER CANCELLED ##');
             }elseif($order && $charge->status != 'completed' && $order->getStatus() == "canceled"){
-                $error_msg = "La orden ha sido cancelada debido a un error en el pago";
+                $error_msg = "La orden ya ha sido cancelada debido a un error en el pago";
             }else{
                 $error_msg = "La orden no puede ser cancelada";
             }
