@@ -6,7 +6,7 @@
  * @copyright   Openpay (http://openpay.mx)
  * @license     http://www.apache.org/licenses/LICENSE-2.0  Apache License Version 2.0
  */
-namespace Openpay\CheckoutLending\Controller\Payment;
+namespace Openpay\CheckoutLending\Controller\Lending;
 
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
@@ -16,7 +16,7 @@ use Magento\Sales\Model\Order\Invoice;
 /**
  * Webhook class
  */
-class Cancelled extends \Magento\Framework\App\Action\Action
+class Success extends \Magento\Framework\App\Action\Action
 {
     protected $resultPageFactory;
     protected $request;
@@ -59,22 +59,27 @@ class Cancelled extends \Magento\Framework\App\Action\Action
         $this->_invoiceService = $invoiceService;
         $this->transactionBuilder = $transactionBuilder;
     }
-
+    /**
+     * Load the page defined in view/frontend/layout/openpay_index_webhook.xml
+     * URL /openpay/payment/success
+     *
+     * @url https://magento.stackexchange.com/questions/197310/magento-2-redirect-to-final-checkout-page-checkout-success-failed?rq=1
+     * @return \Magento\Framework\View\Result\Page
+     */
     public function execute() {
-        $customer=null;
-        $error_msg=null;
+         $customer=null;
         try {
             $order_id = $this->checkoutSession->getLastOrderId();
             $quote_id = $this->checkoutSession->getLastQuoteId();
             $this->checkoutSession->setLastSuccessQuoteId($quote_id);
 
 
-            $this->logger->debug('## CL.controller.payment.cancelled.execute --',
+            $this->logger->debug('## CL.controller.order.success.execute --',
                 array(
-                    'order_id'=>$order_id ,
-                    'quote_id'=>$quote_id,
-                    'getLastSuccessQuoteId'=>$this->checkoutSession->getLastSuccessQuoteId(),
-                    'getLastRealOrderId'=>$this->checkoutSession->getLastRealOrderId()
+                'order_id'=>$order_id ,
+                'quote_id'=>$quote_id,
+                'getLastSuccessQuoteId'=>$this->checkoutSession->getLastSuccessQuoteId(),
+                'getLastRealOrderId'=>$this->checkoutSession->getLastRealOrderId()
                 )
             );
 
@@ -83,7 +88,7 @@ class Cancelled extends \Magento\Framework\App\Action\Action
             $customer_id = $order->getExtCustomerId();
             $transaction_id = $order->getExtOrderId();
 
-            $this->logger->debug('## CL.controller.payment.cancelled.execute --',
+            $this->logger->debug('## CL.controller.order.success.execute --',
                 array(
                     'openpay'=>$openpay ,
                     'order'=>$order,
@@ -94,15 +99,15 @@ class Cancelled extends \Magento\Framework\App\Action\Action
 
             // Seleccionar el tipo de consulta que se hará a la API
             if ($customer_id) {
-                $this->logger->debug('## CL.controller.payment.cancelled.execute -- USER TRANSACTION WITH ACCOUNT ##');
+                $this->logger->debug('## CL.controller.order.success.execute -- USER TRANSACTION WITH ACCOUNT ##');
                 $customer = $this->payment->getOpenpayCustomer($customer_id);
                 $charge = $customer->charges->get($transaction_id);
             } else {
-                $this->logger->debug('## CL.controller.order.cancelled.execute -- USER TRANSACTION WITHOUT ACCOUNT ##');
+                $this->logger->debug('## CL.controller.order.success.execute -- USER TRANSACTION WITHOUT ACCOUNT ##');
                 $charge = $openpay->charges->get($transaction_id);
             }
 
-            $this->logger->debug('## CL.controller.payment.cancelled.execute -- ',
+            $this->logger->debug('## CL.controller.order.success.execute -- ',
                 array(
                     'customer'=>$customer,
                     'charge'=>$charge,
@@ -110,23 +115,54 @@ class Cancelled extends \Magento\Framework\App\Action\Action
                 ));
 
             // Si el cargo no tiene el estatus completado se cancela la orden
-            if ($order && $charge->status != 'completed' && $order->getStatus() == "pending") {
-                $this->logger->debug('## CL.controller.payment.cancelled.execute -- CREDIT NOT APPROVED ##');
+            if ($order && $charge->status != 'completed') {
+                $this->logger->debug('## CL.controller.order.success.execute -- CREDIT NOT APPROVED ##');
                 $order->cancel();
-                $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __('La orden ha sido cancelada'));
+                $order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_CANCELED, __('El crédito no ha sido aprobado'));
                 $order->save();
-                $this->logger->debug('## CL.controller.payment.cancelled.execute -- ORDER CANCELLED ##');
-            }else{
-                $error_msg = "La orden no puede ser cancelada";
+                $this->logger->debug('## CL.controller.order.success.execute -- ORDER CANCELLED ##');
+                return $this->resultPageFactory->create();
             }
 
-            $resultPage = $this->resultPageFactory->create();
+            $this->logger->debug('## CL.controller.order.success.execute -- CREDIT APPROVED ##');
+            $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
+            $order->setState($status)->setStatus($status);
+            $order->setTotalPaid($charge->amount);
+            $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);
+            $order->save();
 
-            /** @var Template $block */
-            $block = $resultPage->getLayout()->getBlock('cancelled');
-            $block->setData('error_msg', $error_msg);
+            $this->logger->debug('## CL.controller.order.success.execute -- CREATING INVOICE ##');
+            $requiresInvoice = true;
+            /** @var InvoiceCollection $invoiceCollection */
+            $invoiceCollection = $order->getInvoiceCollection();
+            if ( $invoiceCollection->count() > 0 ) {
+                /** @var Invoice $invoice */
+                foreach ($invoiceCollection as $invoice ) {
+                    if ( $invoice->getState() == Invoice::STATE_OPEN) {
+                        $invoice->setState(Invoice::STATE_PAID);
+                        $invoice->setTransactionId($charge->id);
+                        $invoice->pay()->save();
+                        $requiresInvoice = false;
+                        break;
+                    }
+                }
+            }
 
-            return $resultPage;
+            if ( $requiresInvoice ) {
+                $invoice = $this->_invoiceService->prepareInvoice($order);
+                $invoice->setTransactionId($charge->id);
+//            $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
+//            $invoice->register();
+                $invoice->pay()->save();
+            }
+
+            $payment = $order->getPayment();
+            $payment->setAmountPaid($charge->amount);
+            $payment->setIsTransactionPending(false);
+            $payment->save();
+
+            $this->logger->debug('## CL.controller.order.success.execute -- SUCCESS REDIRECT:checkout/onepage/success');
+            return $this->resultRedirectFactory->create()->setPath('checkout/onepage/success');
 
         } catch (\Exception $e) {
             $this->logger->error('## CL.controller.order.success.execute -- ERROR',
@@ -139,5 +175,6 @@ class Cancelled extends \Magento\Framework\App\Action\Action
             );
             //throw new \Magento\Framework\Validator\Exception(__($e->getMessage()));
         }
+        return $this->resultRedirectFactory->create()->setPath('checkout/cart');
     }
 }

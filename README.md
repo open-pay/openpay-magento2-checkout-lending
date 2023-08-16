@@ -7,7 +7,7 @@ Módulo para pagos con checkout lending (Compra ahora paga después) con Openpay
 1. Ir a la carpeta raíz del proyecto de Magento y seguir los siguiente pasos:
 
 ```bash    
-composer require openpay/magento2-checkout-lending:~1.0.*   
+composer require openpay/magento2-checkout-lending:1.0.*   
 php bin/magento module:enable Openpay_CheckoutLending --clear-static-content
 php bin/magento setup:upgrade
 php bin/magento cache:clean

@@ -22,6 +22,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Exception\CouldNotSaveException;
 
+use Openpay\Data\Client as Openpay;
 
 // Construct Imports
 use Magento\Store\Model\StoreManagerInterface;
@@ -78,7 +79,6 @@ class Payment extends AbstractMethod
         \Magento\Payment\Helper\Data $paymentData,
         ScopeConfigInterface $scopeConfig,
         \Magento\Payment\Model\Method\Logger $logger,
-        \Openpay\Stores\Mail\Template\TransportBuilder $transportBuilder,
         \Magento\Framework\Translate\Inline\StateInterface $inlineTranslation,
         StoreManagerInterface $storeManager,
         LoggerInterface $logger_interface,
@@ -113,7 +113,6 @@ class Payment extends AbstractMethod
     $this->logger = $logger_interface;
     $this->_inlineTranslation = $inlineTranslation;
     $this->_storeManager = $storeManager;
-    $this->_transportBuilder = $transportBuilder;
     $this->_scopeConfig = $scopeConfig;
     $this->_agreementCollectionFactory = $agreementCollectionFactory;
     $this->_messageManager = $messageManager;
@@ -185,7 +184,7 @@ class Payment extends AbstractMethod
         $this->logger->debug('## 0.1 INSTANCE DATA --' . json_encode($this->merchant_id) . " --- " . json_encode($this->sk) . " --- " . json_encode($this->country));
         $openpay = $this->getOpenpayInstance();
         $base_url = $this->_storeManager->getStore()->getBaseUrl(UrlInterface::URL_TYPE_WEB);
-        $uri = $base_url."openpay/index/webhook";
+        $uri = $base_url."openpay/lending/webhook";
 
         $webhooks = $openpay->webhooks->getList([]);
         $webhookCreated = $this->isWebhookCreated($webhooks, $uri);
@@ -261,11 +260,11 @@ class Payment extends AbstractMethod
     public function getOpenpayInstance() {
         try{
             $this->logger->debug('## CL.model.payment.getOpenpayInstance', array('merchant_id' => $this->merchant_id, 'sk' => $this->sk, 'country' => $this->country ));
-            $openpay = \Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
-            \Openpay::setSandboxMode($this->is_sandbox);
+            $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
+            Openpay::setSandboxMode($this->is_sandbox);
 
             $userAgent = "Openpay-MTO2".$this->country."/v2";
-            \Openpay::setUserAgent($userAgent);
+            Openpay::setUserAgent($userAgent);
 
             return $openpay;
         }catch (\Exception $e) {
@@ -349,10 +348,10 @@ class Payment extends AbstractMethod
                 "lending_data" => Array(
                     "is_privacy_terms_accepted" => $terms_flag, // Pending
                     "callbacks" => Array(
-                        "on_success" => $base_url."openpay/payment/success",  // Pending
-                        "on_reject" => $base_url."openpay/payment/cancelled", //?id=".$order->getIncrementId(),
-                        "on_canceled" => $base_url."openpay/payment/cancelled", //?id=".$order->getIncrementId(),
-                        "on_failed" => $base_url."openpay/payment/cancelled", //?id=".$order->getIncrementId()
+                        "on_success" => $base_url."openpay/lending/success",  // Pending
+                        "on_reject" => $base_url."openpay/lending/cancelled", //?id=".$order->getIncrementId(),
+                        "on_canceled" => $base_url."openpay/lending/cancelled", //?id=".$order->getIncrementId(),
+                        "on_failed" => $base_url."openpay/lending/cancelled", //?id=".$order->getIncrementId()
                     ),
                     "shipping" => Array(
                         "name" => $shipping->getFirstname(),
@@ -549,7 +548,13 @@ class Payment extends AbstractMethod
 
             if (!$this->customerSession->isLoggedIn()) {
                 // Cargo para usuarios "invitados"
-                return $openpay->charges->create($charge_request);
+                $charge = $openpay->charges->create($charge_request);
+                $this->logger->debug($charge->error_message);
+                $this->logger->debug(json_encode($charge->error_message));
+                if($charge->error_message){
+                    throw new CouldNotSaveException(__($charge->error_message),null);
+                }
+                return $charge;
             }
 
             // Se remueve el atributo de "customer" porque ya esta relacionado con una cuenta en Openpay
@@ -558,9 +563,14 @@ class Payment extends AbstractMethod
             $openpay_customer = $this->retrieveOpenpayCustomerAccount($customer_data);
 
             // Cargo para usuarios con cuenta
-            return $openpay_customer->charges->create($charge_request);
-        }catch (\Exception $e) {
-            throw new Exception(__($e->getMessage()));
+            $charge = $openpay_customer->charges->create($charge_request);
+            if($charge->error_message){
+                throw new CouldNotSaveException(__($charge->error_message),null);
+            }
+            return $charge;
+        }catch (CouldNotSaveException $e) {
+            $this->logger->error($e->getMessage());
+            throw new CouldNotSaveException(__($e->getMessage()),$e);
         }
     }
 }
