@@ -73,7 +73,7 @@ class Webhook extends \Magento\Framework\App\Action\Action implements CsrfAwareA
                     $status = \Magento\Sales\Model\Order::STATE_PROCESSING;
                     $order->setState($status)->setStatus($status);
                     $order->setTotalPaid($charge->amount);
-                    $order->addStatusHistoryComment("Pago recibido exitosamente")->setIsCustomerNotified(true);
+                    $order->addStatusHistoryComment("Confirmación de pago recibido exitosamente (Webhook)")->setIsCustomerNotified(true);
                     $order->save();
 
                     $invoice = $this->invoiceService->prepareInvoice($order);
