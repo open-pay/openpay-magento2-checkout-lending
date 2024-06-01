@@ -549,7 +549,6 @@ class Payment extends AbstractMethod
             if (!$this->customerSession->isLoggedIn()) {
                 // Cargo para usuarios "invitados"
                 $charge = $openpay->charges->create($charge_request);
-                $this->logger->debug($charge->error_message);
                 $this->logger->debug(json_encode($charge->error_message));
                 if($charge->error_message){
                     throw new CouldNotSaveException(__($charge->error_message),null);
