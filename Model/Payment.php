@@ -169,8 +169,7 @@ class Payment extends AbstractMethod
 
             $payment->setSkipOrderProcessing(true);
         }catch (Exception $e) {
-            $this->debugData(['exception' => $e->getMessage()]);
-            //$this->_logger->error(__( $e->getMessage()));
+            $this->_logger->error(__( $e->getMessage()));
             throw new Exception(__($this->error($e)));
         }
         return $this;
@@ -339,6 +338,7 @@ class Payment extends AbstractMethod
         try {
             $terms_flag = $this->isPrivacyTermsActivated();
             $base_url = $this->_storeManager->getStore()->getBaseUrl(UrlInterface::URL_TYPE_WEB);
+            $origin_channel = "PLUGIN_MAGENTO";
             $charge_data = array(
                 'method' => 'lending',
                 'amount' => $amount,
@@ -379,7 +379,8 @@ class Payment extends AbstractMethod
                         "email" => $order->getCustomerEmail()
                     )
                 ),
-                'customer' => $customer_data
+                'customer' => $customer_data,
+                'origin_channel' => $origin_channel
             );
             return $charge_data;
         }catch (CouldNotSaveException $e) {
