@@ -22,7 +22,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\Exception\CouldNotSaveException;
 
-use Openpay\Data\Client as Openpay;
+use Openpay\Data\Openpay;
 
 // Construct Imports
 use Magento\Store\Model\StoreManagerInterface;
@@ -259,7 +259,8 @@ class Payment extends AbstractMethod
     public function getOpenpayInstance() {
         try{
             $this->logger->debug('## CL.model.payment.getOpenpayInstance', array('merchant_id' => $this->merchant_id, 'sk' => $this->sk, 'country' => $this->country ));
-            $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country);
+            $ipClient = $this->getIpClient();
+            $openpay = Openpay::getInstance($this->merchant_id, $this->sk, $this->country, $ipClient);
             Openpay::setSandboxMode($this->is_sandbox);
 
             $userAgent = "Openpay-MTO2".$this->country."/v2";
@@ -513,6 +514,28 @@ class Payment extends AbstractMethod
         } catch (\Exception $e) {
             throw new Exception(__($e->getMessage()));
         }
+    }
+
+    public function getIpClient(){
+        // Recogemos la IP de la cabecera de la conexión
+        if (!empty($_SERVER['HTTP_CLIENT_IP']))
+        {
+            $ipAdress = $_SERVER['HTTP_CLIENT_IP'];
+            $this->logger->debug('#HTTP_CLIENT_IP', array('$IP' => $ipAdress));
+        }
+        // Caso en que la IP llega a través de un Proxy
+        elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
+        {
+            $ipAdress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+            $this->logger->debug('#HTTP_X_FORWARDED_FOR', array('$IP' => $ipAdress));
+        }
+        // Caso en que la IP lleva a través de la cabecera de conexión remota
+        else
+        {
+            $ipAdress = $_SERVER['REMOTE_ADDR'];
+            $this->logger->debug('#REMOTE_ADDR', array('$IP' => $ipAdress));
+        }
+        return $ipAdress;
     }
 
 
