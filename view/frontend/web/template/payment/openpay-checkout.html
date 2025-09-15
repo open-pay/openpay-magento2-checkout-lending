@@ -4,6 +4,29 @@
  * See COPYING.txt for license details.
  */
 -->
+ <style>
+    /*
+    * Selector correcto: Apunta al título dentro del contenedor del método de pago
+    */
+    .payment-method .payment-method-title {
+        display: flex;
+        align-items: center;
+    }
+
+    /*
+    * Contenedor de los íconos para agregar espaciado
+    */
+    .payment-icons-container {
+        margin-left: 15px; /* Ajusta este valor según el espacio que desees */
+    }
+
+    .payment-icon {
+        width: 90px;   /* Ajusta el ancho que desees */
+        height: 25px;  /* Ajusta el alto que desees */
+        object-fit: contain; /* Asegura que la imagen se escale bien dentro del espacio */
+    }
+    
+ </style>
 <div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}">
     <div class="payment-method-title field choice">
         <input type="radio"
@@ -11,6 +34,10 @@
                class="radio"
                data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()"/>
         <label data-bind="attr: {'for': getCode()}" class="label"><span data-bind="text: getTitle()"></span></label>
+
+        <div class="payment-icons-container">
+             <img class="payment-icon" src="https://img.openpay.mx/plugins/kueskipay_logo.svg"  alt="Buy Now, Pay Later" />
+        </div>
     </div>
     <div class="payment-method-content">
         <!-- ko foreach: getRegion('messages') -->
